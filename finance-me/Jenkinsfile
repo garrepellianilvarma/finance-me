@@ -14,36 +14,20 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    credentialsId: 'github-creds',
-                    url: 'https://github.com/garrepellianilvarma/finance-me.git'
-
                 echo 'Source Code Checked Out'
- 91db2bc (Added complete Jenkins pipeline)
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn clean package'
                 dir('finance-me') {
                     sh 'mvn clean package'
                 }
- 91db2bc (Added complete Jenkins pipeline)
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                    $SCANNER_HOME/bin/sonar-scanner \
-                    -Dsonar.projectKey=finance-me \
-                    -Dsonar.projectName=finance-me \
-                    -Dsonar.sources=src \
-                    -Dsonar.java.binaries=target/classes
-                    '''
                 dir('finance-me') {
                     withSonarQubeEnv('SonarQube') {
                         sh '''
@@ -54,39 +38,29 @@ pipeline {
                         -Dsonar.java.binaries=target/classes
                         '''
                     }
- 91db2bc (Added complete Jenkins pipeline)
                 }
             }
         }
 
         stage('Trivy File Scan') {
             steps {
-
-                sh 'trivy fs .'
                 dir('finance-me') {
                     sh 'trivy fs .'
                 }
- 91db2bc (Added complete Jenkins pipeline)
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
                 dir('finance-me') {
                     sh 'docker build -t finance-me:v1 .'
                 }
- 91db2bc (Added complete Jenkins pipeline)
             }
         }
 
         stage('Trivy Image Scan') {
             steps {
-
-                sh 'trivy image $IMAGE_NAME'
-
                 sh 'trivy image finance-me:v1'
- 91db2bc (Added complete Jenkins pipeline)
             }
         }
 
@@ -94,11 +68,7 @@ pipeline {
             steps {
                 sh '''
                 docker rm -f finance-me-container || true
-
-                docker run -d --name finance-me-container -p 8085:8080 $IMAGE_NAME
-
                 docker run -d --name finance-me-container -p 8085:8080 finance-me:v1
-91db2bc (Added complete Jenkins pipeline)
                 '''
             }
         }
